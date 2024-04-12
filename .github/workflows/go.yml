@@ -18,6 +18,10 @@ jobs:
 
   goreadme:
     runs-on: ubuntu-latest
+    container:
+      image: ci-image:v1.0.0
+      options: --user 1001
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
