@@ -325,7 +325,6 @@ func (ln *Listener) sendConn(ctx context.Context, rcvr *VirtualListener, bc io.B
 
 func (ln *Listener) cleanup() {
 	ln.wg.Wait()
-	fmt.Println("cleanup done")
 	for _, cmatcher := range ln.connMatchers {
 		lis := cmatcher.VirtLis
 		close(lis.in)
