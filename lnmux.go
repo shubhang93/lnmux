@@ -42,7 +42,7 @@ type Listener struct {
 
 	// WorkerLimitBreachNotifier notifies you when the downstream servers are unable to accept connections return a true to stop listener mux-ing
 	WorkerLimitBreachNotifier func(retryAttempt int) (exitListener bool)
-	
+
 	// ConnClosureNotifier notifies whenever a connection is closed. This function may be called concurrently
 	ConnClosureNotifier func(cause error)
 
@@ -65,10 +65,7 @@ type connMatcher struct {
 	ConnMatchFunc connmatch.Func
 }
 
-// Serve starts serving the connections to each of the virtual listeners
-//
-// registered using the ListenFor method
-//
+// Serve starts serving the connections to each of the virtual listeners registered using the ListenFor method
 // Serve is context aware and can be cancelled any time
 func (ln *Listener) Serve(ctx context.Context) error {
 
