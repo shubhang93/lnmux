@@ -1,3 +1,6 @@
+// Package lnmux provides a multiplexed listener which
+// sends connections to several virtual listeners which listen
+// to a specific type of [net.Conn]
 package lnmux
 
 import (
@@ -26,26 +29,13 @@ type workerConfig struct {
 	calcJitter  func(attempt int) int
 }
 
-// Listener
-// is used to create and configure a multiplexed listener
-//
-// - Root - Set the root listener created using [net.Listen]. panics on nil
-//
-// - ConnReadTimeout - The read timeout for a connection, this is honored by the matcher functions
-//
-// - MatchErrHandler - A function that receives the match error, matched flag and the matcher name, return a true to close the connection and stop the match process
-//
-// - WorkerLimitBreachNotifier The max number of workers to send connections to virtual listeners is 4096, it is already a very high number.
-//
-// If you have reached this limit, we retry for 6000 times and exit the serve method. This function notifies the retry attempt, return a true to stop mux-ing
-//
-// ConnClosureNotifier Whenever fatal errors occur during matching process the connection is closed, this function notifies a connection closure
+// Listener is used to create and configure a multiplexed listener
 type Listener struct {
-	Root                      net.Listener
-	ConnReadTimeout           time.Duration
-	MatchErrHandler           func(err error, matched bool, matcher string) (closeConn bool)
-	WorkerLimitBreachNotifier func(retryAttempt int) (exitListener bool)
-	ConnClosureNotifier       func(cause error)
+	Root                      net.Listener                                                   // Root listener which is of type [net.Listener]
+	ConnReadTimeout           time.Duration                                                  // ConnReadTimeout is the read timeout for each connection
+	MatchErrHandler           func(err error, matched bool, matcher string) (closeConn bool) // MatchErrHandler handle match errors and return `true` to close the connection and stop the matching. This function may be concurrently invoked
+	WorkerLimitBreachNotifier func(retryAttempt int) (exitListener bool)                     // WorkerLimitBreachNotifier notifies you when the downstream servers are unable to accept connections return a true to stop listener mux-ing
+	ConnClosureNotifier       func(cause error)                                              // ConnClosureNotifier notifies whenever a connection is closed. This function may be called concurrently
 
 	serving atomic.Bool
 	wg      sync.WaitGroup
@@ -284,10 +274,7 @@ func (ln *Listener) increaseConnDeadline(bc *io.BufferedConn, deadline time.Time
 
 }
 
-// ListenFor registers a connection matcher function which can be used to
-//
-// register a new connection matcher
-//
+// ListenFor registers a connection matcher function which can be used to register a new connection matcher
 // it returns a VirtualListener back to the caller
 func (ln *Listener) ListenFor(name string, cmf connmatch.Func) net.Listener {
 
@@ -345,15 +332,9 @@ func (ln *Listener) cleanup() {
 
 }
 
-// VirtualListener is a listener which
-//
-// listens to connections from the root listener
-//
-// virtual listener only receives connections
-//
-// which pass a certain match condition as dictated by the matcher functions registered
-//
-// it implements the [net.Listener]
+// VirtualListener is a listener which listens to connections from the root listener
+// virtual listener only receives connections which pass a certain match condition
+// as dictated by the matcher functions registered it implements the [net.Listener]
 type VirtualListener struct {
 	rootListener    net.Listener
 	in              chan io.BufferedConn
@@ -387,9 +368,7 @@ func (vlis *VirtualListener) Accept() (net.Conn, error) {
 }
 
 // Close closes the virtual listener and any downstream
-//
 // using this listener will stop receiving connections
-//
 // the method is idempotent
 func (vlis *VirtualListener) Close() error {
 
@@ -415,8 +394,7 @@ func (vlis *VirtualListener) Addr() net.Addr {
 	return vlis.rootListener.Addr()
 }
 
-// IsAbnormalTermination whether the listener terminated
-// abnormally
+// IsAbnormalTermination whether the listener terminated abnormally
 func IsAbnormalTermination(err error) bool {
 	switch {
 	case errors.Is(err, ErrRootListenerClosed),

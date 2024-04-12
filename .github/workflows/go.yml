@@ -15,19 +15,6 @@ permissions:
   contents: write
 
 jobs:
-
-  goreadme:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-      - name: Update readme according to Go doc
-        uses: posener/goreadme@v1
-        with:
-          GITHUB_TOKEN: '${{ secrets.PAT }}'
-
-
   build:
     runs-on: ubuntu-latest
     steps:
