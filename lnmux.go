@@ -31,11 +31,20 @@ type workerConfig struct {
 
 // Listener is used to create and configure a multiplexed listener
 type Listener struct {
-	Root                      net.Listener                                                   // Root listener which is of type [net.Listener]
-	ConnReadTimeout           time.Duration                                                  // ConnReadTimeout is the read timeout for each connection
-	MatchErrHandler           func(err error, matched bool, matcher string) (closeConn bool) // MatchErrHandler handle match errors and return `true` to close the connection and stop the matching. This function may be concurrently invoked
-	WorkerLimitBreachNotifier func(retryAttempt int) (exitListener bool)                     // WorkerLimitBreachNotifier notifies you when the downstream servers are unable to accept connections return a true to stop listener mux-ing
-	ConnClosureNotifier       func(cause error)                                              // ConnClosureNotifier notifies whenever a connection is closed. This function may be called concurrently
+	// Root listener which is of type [net.Listener]
+	Root net.Listener
+
+	// ConnReadTimeout is the read timeout for each connection
+	ConnReadTimeout time.Duration
+
+	// MatchErrHandler handle match errors and return `true` to close the connection and stop the matching. This function may be concurrently invoked
+	MatchErrHandler func(err error, matched bool, matcher string) (closeConn bool)
+
+	// WorkerLimitBreachNotifier notifies you when the downstream servers are unable to accept connections return a true to stop listener mux-ing
+	WorkerLimitBreachNotifier func(retryAttempt int) (exitListener bool)
+	
+	// ConnClosureNotifier notifies whenever a connection is closed. This function may be called concurrently
+	ConnClosureNotifier func(cause error)
 
 	serving atomic.Bool
 	wg      sync.WaitGroup
