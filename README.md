@@ -1,14 +1,11 @@
-# connmatch
---
-    import "."
+# lnmux
 
+## Listener multiplexing to run multiple web services on a single port (HTTP / HTTP2 / GRPC)
 
-## Usage
+For docs please run
 
-#### type Func
+```shell
+godoc -http :6060
+open http://localhost:6060/pkg/github.com/shubhang93/lnmux/
 
-```go
-type Func func(connPkr lnmuxio.ConnPeeker) (matched bool, matchErr error)
 ```
-
-Func is the function signatures for connection matchers
