@@ -1,10 +1,12 @@
-//go:build ignore
+//go:build exclude
 
 package main
 
 import (
 	"context"
 	"fmt"
+	"github.com/shubhang93/lnmux"
+	"github.com/shubhang93/lnmux/matchers"
 	"golang.org/x/net/http2"
 	"net"
 	"net/http"
@@ -23,11 +25,11 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
-	mux := lismux.Listener{Root: ln, ConnReadTimeout: 100 * time.Millisecond}
+	mux := lnmux.Listener{Root: ln, ConnReadTimeout: 100 * time.Millisecond}
 
-	jsonListener := mux.ListenFor("content-type:json", lismux.MatchHeader(192, "Content-Type: application/json"))
-	httpFastListener := mux.ListenFor("http-fast-listener", lismux.MatchHTTPFast(64))
-	HTTP2Listener := mux.ListenFor("grpc", lismux.MatchHTTP2Preface())
+	jsonListener := mux.ListenFor("content-type:json", matchers.MatchHeader(192, "Content-Type: application/json"))
+	httpFastListener := mux.ListenFor("http-fast-listener", matchers.MatchHTTPFast(64))
+	HTTP2Listener := mux.ListenFor("grpc", matchers.MatchHTTP2Preface())
 	// same matcher can be used for GRPC as well
 
 	var wg sync.WaitGroup
