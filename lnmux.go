@@ -9,18 +9,17 @@ import (
 	"errors"
 	"fmt"
 	"github.com/shubhang93/lnmux/connmatch"
+	"github.com/shubhang93/lnmux/internal/io"
 	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/shubhang93/lnmux/io"
 )
 
 type semToken struct{}
 
-const maxSendWorkers = 1 << 12
+const maxSendWorkers = 1 << 9
 
 type workerConfig struct {
 	maxAttempts int

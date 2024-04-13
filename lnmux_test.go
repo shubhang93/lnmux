@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fortytw2/leaktest"
-	lnmuxio "github.com/shubhang93/lnmux/io"
+	"github.com/shubhang93/lnmux/connmatch"
 	"github.com/shubhang93/lnmux/matchers"
 	"io"
 	"net"
@@ -318,13 +318,13 @@ func TestListener_Serve(t *testing.T) {
 
 		lnmux := Listener{Root: ln}
 
-		vl1 := lnmux.ListenFor("http-1", func(pkr lnmuxio.ConnPeeker) (bool, error) {
+		vl1 := lnmux.ListenFor("http-1", func(pkr connmatch.Peeker) (bool, error) {
 			return true, nil
 		})
-		vl2 := lnmux.ListenFor("http-header-matcher", func(pkr lnmuxio.ConnPeeker) (bool, error) {
+		vl2 := lnmux.ListenFor("http-header-matcher", func(pkr connmatch.Peeker) (bool, error) {
 			return true, nil
 		})
-		vl3 := lnmux.ListenFor("GRPC", func(pkr lnmuxio.ConnPeeker) (bool, error) {
+		vl3 := lnmux.ListenFor("GRPC", func(pkr connmatch.Peeker) (bool, error) {
 			return true, nil
 		})
 
@@ -380,7 +380,7 @@ func TestListener_Serve(t *testing.T) {
 
 			lnmux := Listener{Root: ln}
 
-			virtLis := lnmux.ListenFor("HTTPOne", func(pkr lnmuxio.ConnPeeker) (bool, error) {
+			virtLis := lnmux.ListenFor("HTTPOne", func(pkr connmatch.Peeker) (bool, error) {
 				return true, nil
 			})
 
@@ -796,11 +796,11 @@ func getRequest(cl *http.Client, url string, headers map[string]string) (string,
 	return string(bb), nil
 }
 
-func allowAllTraffic(pkr lnmuxio.ConnPeeker) (bool, error) {
+func allowAllTraffic(pkr connmatch.Peeker) (bool, error) {
 	return true, nil
 }
 
-func headerMatcher(peeker lnmuxio.ConnPeeker) (bool, error) {
+func headerMatcher(peeker connmatch.Peeker) (bool, error) {
 	// an example implementation
 	// not performant
 	// only used for testing

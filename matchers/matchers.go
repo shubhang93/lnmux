@@ -3,7 +3,6 @@ package matchers
 import (
 	"bytes"
 	"github.com/shubhang93/lnmux/connmatch"
-	lnmuxio "github.com/shubhang93/lnmux/io"
 	"net/http"
 	"os"
 	"strings"
@@ -17,12 +16,12 @@ const http2ReqLine = "HTTP/2"
 // highly unlikely to change
 const http2ConnPreface = "PRI * HTTP/2.0\n\nSM\n\n"
 
-// Func takes a lnmuxio.ConnPeeker
+// Func takes a lnmuxio.Peeker
 // peeks into the connection without consuming bytes from the underlying connection
 // return a true if match succeeded and an error to signal an error
 
 func MatchHeader(sniffN int, header string) connmatch.Func {
-	return func(pkr lnmuxio.ConnPeeker) (bool, error) {
+	return func(pkr connmatch.Peeker) (bool, error) {
 		peeked, err := pkr.Peek(sniffN)
 
 		var timeoutErr error
@@ -50,21 +49,21 @@ func MatchHeader(sniffN int, header string) connmatch.Func {
 
 // MatchHTTPOne matches HTTP/1.0 connections
 func MatchHTTPOne(sniffN int) connmatch.Func {
-	return func(rp lnmuxio.ConnPeeker) (bool, error) {
+	return func(rp connmatch.Peeker) (bool, error) {
 		return matchHTTPVersion(sniffN, 1, rp)
 	}
 }
 
 // MatchHTTPFast matches HTTP/1.1 connections
 func MatchHTTPFast(sniffN int) connmatch.Func {
-	return func(connPkr lnmuxio.ConnPeeker) (bool, error) {
+	return func(connPkr connmatch.Peeker) (bool, error) {
 		return matchHTTPVersion(sniffN, 11, connPkr)
 	}
 }
 
 // MatchHTTPTwoCURL matches HTTP/2.0 connections as sent with curl --prior-knowledge flag
 func MatchHTTPTwoCURL(sniffN int) connmatch.Func {
-	return func(pkr lnmuxio.ConnPeeker) (bool, error) {
+	return func(pkr connmatch.Peeker) (bool, error) {
 		return matchHTTPVersion(sniffN, 2, pkr)
 	}
 }
@@ -73,7 +72,7 @@ func MatchHTTPTwoCURL(sniffN int) connmatch.Func {
 // HTTP/2 connection preface `PRI * HTTP/2.0\n\nSM\n\n`
 // GRPC connections can also be matched with this
 func MatchHTTP2Preface() connmatch.Func {
-	return func(pkr lnmuxio.ConnPeeker) (bool, error) {
+	return func(pkr connmatch.Peeker) (bool, error) {
 		bs, err := pkr.Peek(len(http2ConnPreface))
 
 		var timeoutErr error
@@ -92,7 +91,7 @@ func MatchHTTP2Preface() connmatch.Func {
 	}
 }
 
-func matchHTTPVersion(sniffN int, version int, pkr lnmuxio.ConnPeeker) (bool, error) {
+func matchHTTPVersion(sniffN int, version int, pkr connmatch.Peeker) (bool, error) {
 	peeked, err := pkr.Peek(sniffN)
 	var timeoutErr error
 	if err != nil && !os.IsTimeout(err) {
