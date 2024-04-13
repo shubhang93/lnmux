@@ -130,13 +130,6 @@ func (ln *Listener) Serve(ctx context.Context) error {
 
 			}
 
-			buffConn := io.BufferedConn{Conn: conn, BuffRdr: bufio.NewReader(conn)}
-			deadline := time.Now().Add(ln.ConnReadTimeout)
-
-			if ln.ConnReadTimeout > 0 {
-				_ = buffConn.Conn.SetReadDeadline(deadline)
-			}
-
 			jitterFunc := ln.workerConf.calcJitter
 			sleepFor := ln.workerConf.sleepFor
 			maxAttempts := ln.workerConf.maxAttempts
@@ -148,20 +141,24 @@ func (ln *Listener) Serve(ctx context.Context) error {
 				select {
 				// try to acquire sem
 				case <-allListenersClosed:
+					_ = conn.Close()
+					ln.ConnClosureNotifier(ErrVirtualListenersClosed)
 					return ErrVirtualListenersClosed
 				case <-ctx.Done():
+					_ = conn.Close()
+					ln.ConnClosureNotifier(ctx.Err())
 					return ctx.Err()
 				case ln.sem <- semToken{}:
 					spin = false
 				default:
 					// sleep for 10ms*jitter and retry
 					if attempts >= maxAttempts {
-						_ = buffConn.Close()
+						_ = conn.Close()
 						ln.ConnClosureNotifier(ErrSendWorkersBlocked)
 						return ErrSendWorkersBlocked
 					}
 					if shouldExit := ln.WorkerLimitBreachNotifier(attempts); shouldExit {
-						_ = buffConn.Close()
+						_ = conn.Close()
 						ln.ConnClosureNotifier(ErrSendWorkersBlocked)
 						return ErrSendWorkersBlocked
 					}
@@ -172,6 +169,12 @@ func (ln *Listener) Serve(ctx context.Context) error {
 			}
 
 			ln.wg.Add(1)
+			buffConn := io.BufferedConn{Conn: conn, BuffRdr: bufio.NewReader(conn)}
+			deadline := time.Now().Add(ln.ConnReadTimeout)
+
+			if ln.ConnReadTimeout > 0 {
+				_ = buffConn.Conn.SetReadDeadline(deadline)
+			}
 			go func() {
 				defer func() {
 					<-ln.sem
