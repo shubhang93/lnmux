@@ -31,13 +31,12 @@ func TestListener_Serve(t *testing.T) {
 			t.Errorf("error creating a listener:%v", err)
 			return
 		}
+		defer ln.Close()
 		muxLn := &Listener{Root: ln, ConnReadTimeout: 500 * time.Millisecond}
 
 		shouldPanic(t, func() {
 			_ = muxLn.ListenFor("efg", nil)
 		})
-
-		_ = ln.Close()
 
 	})
 
@@ -48,6 +47,9 @@ func TestListener_Serve(t *testing.T) {
 			t.Errorf("error creating a listener:%v", err)
 			return
 		}
+
+		defer ln.Close()
+
 		muxLn := &Listener{Root: ln, ConnReadTimeout: 500 * time.Millisecond}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
@@ -91,6 +93,7 @@ func TestListener_Serve(t *testing.T) {
 			t.Errorf("error creating a listener:%v", err)
 			return
 		}
+		defer ln.Close()
 
 		muxLn := &Listener{Root: ln}
 		ctx, cacnel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -134,6 +137,7 @@ func TestListener_Serve(t *testing.T) {
 			t.Errorf("error creating a listener:%v", err)
 			return
 		}
+		defer ln.Close()
 
 		muxLn := &Listener{Root: ln, ConnReadTimeout: 100 * time.Millisecond}
 		ctx, cacnel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -216,6 +220,7 @@ func TestListener_Serve(t *testing.T) {
 			t.Errorf("listener create error:%v", err)
 			return
 		}
+		defer ln.Close()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -315,6 +320,7 @@ func TestListener_Serve(t *testing.T) {
 			t.Error("error creating listener", err.Error())
 			return
 		}
+		defer ln.Close()
 
 		lnmux := Listener{Root: ln}
 
@@ -377,6 +383,7 @@ func TestListener_Serve(t *testing.T) {
 				t.Error("error creating listener", err.Error())
 				return
 			}
+			defer ln.Close()
 
 			lnmux := Listener{Root: ln}
 
@@ -406,6 +413,7 @@ func TestListener_Serve(t *testing.T) {
 			t.Error("error creating listener", err.Error())
 			return
 		}
+		defer ln.Close()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -476,6 +484,7 @@ func TestListener_Serve(t *testing.T) {
 			t.Errorf("error creating lis:%v", err)
 			return
 		}
+		defer ln.Close()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 2000*time.Millisecond)
 		defer cancel()
@@ -557,13 +566,13 @@ func TestListener_Serve(t *testing.T) {
 	})
 
 	t.Run("worker limit is exceeded", func(t *testing.T) {
-
 		defer leaktest.CheckTimeout(t, 10000*time.Millisecond)()
 		ln, err := net.Listen("tcp", ":8080")
 		if err != nil {
 			t.Error("error creating lis:", err.Error())
 			return
 		}
+		defer ln.Close()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -640,6 +649,7 @@ func TestListener_Serve(t *testing.T) {
 			t.Error("error creating lis:", err.Error())
 			return
 		}
+		defer ln.Close()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -716,6 +726,7 @@ func TestListener_Serve(t *testing.T) {
 			t.Error("error creating lis:", err.Error())
 			return
 		}
+		defer ln.Close()
 
 		muxLn := Listener{
 			Root:            ln,
