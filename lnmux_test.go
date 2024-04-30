@@ -496,6 +496,7 @@ func TestListener_Serve(t *testing.T) {
 				defer cntMU.Unlock()
 				if errors.Is(cause, io.EOF) {
 					errCounter["EOF"]++
+					return
 				}
 
 				if errors.Is(cause, os.ErrDeadlineExceeded) {
@@ -507,7 +508,7 @@ func TestListener_Serve(t *testing.T) {
 		// to simulate a timeout
 		httpOneLis := muxLn.ListenFor("http-1", matchers.MatchHTTPOne(1024))
 		var wg sync.WaitGroup
-		wg.Add(2)
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			_ = startHTTPServer(ctx, httpOneLis, func(writer http.ResponseWriter, request *http.Request) {
@@ -515,6 +516,7 @@ func TestListener_Serve(t *testing.T) {
 			})
 		}()
 
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			err = muxLn.Serve(ctx)
@@ -547,11 +549,6 @@ func TestListener_Serve(t *testing.T) {
 		}()
 
 		wg.Wait()
-
-		// protect this in a mutex to prevent race
-		// conditions as notifier functions are run concurrently
-		cntMU.Lock()
-		defer cntMU.Unlock()
 		if !reflect.DeepEqual(expectedErrCounter, errCounter) {
 			expectedJSON, _ := json.MarshalIndent(expectedErrCounter, "", " ")
 			gotJSON, _ := json.MarshalIndent(errCounter, "", " ")

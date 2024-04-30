@@ -71,6 +71,8 @@ func (ln *Listener) Serve(ctx context.Context) error {
 	ln.mustInit()
 	ln.serving.Store(true)
 
+	defer ln.wait()
+
 	ln.mu.Lock()
 	matchers := ln.connMatchers
 	ln.mu.Unlock()
@@ -167,17 +169,18 @@ func (ln *Listener) Serve(ctx context.Context) error {
 				}
 			}
 
-			ln.wg.Add(1)
 			buffConn := io.BufferedConn{Conn: conn, BuffRdr: bufio.NewReader(conn)}
 			deadline := time.Now().Add(ln.ConnReadTimeout)
 
 			if ln.ConnReadTimeout > 0 {
 				_ = buffConn.Conn.SetReadDeadline(deadline)
 			}
+
+			ln.wg.Add(1)
 			go func() {
 				defer func() {
-					<-ln.sem
 					ln.wg.Done()
+					<-ln.sem
 				}()
 				ln.handleConnection(ctx, buffConn, deadline, connMatchers)
 			}()
@@ -325,7 +328,7 @@ func (ln *Listener) sendConn(ctx context.Context, rcvr *VirtualListener, bc io.B
 	}
 }
 
-func (ln *Listener) cleanup() {
+func (ln *Listener) wait() {
 	ln.wg.Wait()
 	for _, cmatcher := range ln.connMatchers {
 		lis := cmatcher.VirtLis
@@ -336,7 +339,6 @@ func (ln *Listener) cleanup() {
 		lis := cmatcher.VirtLis
 		<-lis.closeNotifier
 	}
-
 }
 
 // VirtualListener is a listener which listens to connections from the root listener
