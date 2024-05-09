@@ -66,6 +66,7 @@ func main() {
 	}()
 
 	go func() {
+		defer wg.Done()
 		startServer(HTTP2Listener, func(writer http.ResponseWriter, request *http.Request) {
 			_, _ = fmt.Fprintf(writer, "HTTP2_OK")
 		}, false)
