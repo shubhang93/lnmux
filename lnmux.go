@@ -100,6 +100,10 @@ func (ln *Listener) Serve(ctx context.Context) error {
 		_ = ln.Root.Close()
 	}()
 
+	ln.mu.Lock()
+	connMatchers := ln.connMatchers
+	ln.mu.Unlock()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -117,18 +121,6 @@ func (ln *Listener) Serve(ctx context.Context) error {
 				default:
 					return fmt.Errorf("root listener accept error:%w", err)
 				}
-			}
-
-			ln.mu.Lock()
-			connMatchers := ln.connMatchers
-			ln.mu.Unlock()
-
-			select {
-			case <-ctx.Done():
-				_ = conn.Close()
-				return fmt.Errorf("conn accepted but context is done:%w", ctx.Err())
-			default:
-
 			}
 
 			jitterFunc := ln.workerConf.calcJitter
