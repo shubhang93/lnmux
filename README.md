@@ -69,7 +69,7 @@ func main() {
 		defer wg.Done()
 		startServer(HTTP2Listener, func(writer http.ResponseWriter, request *http.Request) {
 			_, _ = fmt.Fprintf(writer, "HTTP2_OK")
-		}, false)
+		}, true)
 	}()
 
 	if err := mux.Serve(ctx); err != nil {
