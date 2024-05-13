@@ -45,7 +45,7 @@ func main() {
 
 	httpOneListener := mux.ListenFor("http-one-listener", matchers.AutoMatchHTTP)
 	httpFastListener := mux.ListenFor("http-fast-listener", matchers.AutoMatchHTTPFast)
-	HTTP2Listener := mux.ListenFor("grpc", matchers.MatchHTTP2Preface())
+	HTTP2Listener := mux.ListenFor("grpc", matchers.MatchHTTP2Preface)
 	// same matcher can be used for GRPC as well
 
 	var wg sync.WaitGroup
