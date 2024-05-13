@@ -171,7 +171,7 @@ Accept: application/json`
 		}
 		_ = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 		buffConn := bufio.NewReader(conn)
-		sniffer := MatchHTTP2Preface()
+		sniffer := MatchHTTP2Preface
 		match, err := sniffer(buffConn)
 		if err != nil && !os.IsTimeout(err) {
 			t.Errorf("match error:%v", err)

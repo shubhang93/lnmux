@@ -9,6 +9,7 @@ import (
 )
 
 const http2ReqLine = "HTTP/2"
+const defaultByteReadSize = 512
 
 // copied from
 // "golang.org/x/net/http2"
@@ -20,31 +21,49 @@ const http2ConnPreface = "PRI * HTTP/2.0\n\nSM\n\n"
 // peeks into the connection without consuming bytes from the underlying connection
 // return a true if match succeeded and an error to signal an error
 
+func AutoMatchHeader(header string) connmatch.Func {
+	return func(connPkr connmatch.Peeker) (matched bool, matchErr error) {
+		return matchHeader(connPkr, defaultByteReadSize, header)
+	}
+}
+
 func MatchHeader(sniffN int, header string) connmatch.Func {
 	return func(pkr connmatch.Peeker) (bool, error) {
-		peeked, err := pkr.Peek(sniffN)
+		return matchHeader(pkr, sniffN, header)
+	}
+}
 
-		var timeoutErr error
-		if err != nil && !os.IsTimeout(err) {
-			return false, err
-		} else {
-			timeoutErr = err
-		}
+func matchHeader(pkr connmatch.Peeker, sniffN int, header string) (bool, error) {
+	peeked, err := pkr.Peek(sniffN)
 
-		lines := bytes.Split(peeked, []byte{'\n'})
-		if len(lines) > 2 {
-			first := string(lines[0])
-			lines = lines[1:]
-			if parseHTTPFast(first) || parseHTTPZero(first) {
-				for _, line := range lines {
-					if strings.Contains(string(line), header) {
-						return true, timeoutErr
-					}
+	var timeoutErr error
+	if err != nil && !os.IsTimeout(err) {
+		return false, err
+	} else {
+		timeoutErr = err
+	}
+
+	lines := bytes.Split(peeked, []byte{'\n'})
+	if len(lines) > 2 {
+		first := string(lines[0])
+		lines = lines[1:]
+		if parseHTTPFast(first) || parseHTTPZero(first) {
+			for _, line := range lines {
+				if strings.Contains(string(line), header) {
+					return true, timeoutErr
 				}
 			}
 		}
-		return false, timeoutErr
 	}
+	return false, timeoutErr
+}
+
+func AutoMatchHTTP(pkr connmatch.Peeker) (bool, error) {
+	return matchHTTPVersion(defaultByteReadSize, 1, pkr)
+}
+
+func AutoMatchHTTPFast(pkr connmatch.Peeker) (bool, error) {
+	return matchHTTPVersion(defaultByteReadSize, 11, pkr)
 }
 
 // MatchHTTPOne matches HTTP/1.0 connections
@@ -71,24 +90,23 @@ func MatchHTTPTwoCURL(sniffN int) connmatch.Func {
 // MatchHTTP2Preface can be used for connections which contain the
 // HTTP/2 connection preface `PRI * HTTP/2.0\n\nSM\n\n`
 // GRPC connections can also be matched with this
-func MatchHTTP2Preface() connmatch.Func {
-	return func(pkr connmatch.Peeker) (bool, error) {
-		bs, err := pkr.Peek(len(http2ConnPreface))
+func MatchHTTP2Preface(pkr connmatch.Peeker) (bool, error) {
+	bs, err := pkr.Peek(len(http2ConnPreface))
 
-		var timeoutErr error
-		if err != nil && !os.IsTimeout(err) {
-			return false, err
-		} else {
-			timeoutErr = err
-		}
-
-		lines := bytes.Split(bs, []byte{'\n'})
-		if len(lines) > 0 {
-			first := lines[0]
-			return strings.HasPrefix(http2ConnPreface, string(first)), timeoutErr
-		}
-		return false, timeoutErr
+	var timeoutErr error
+	if err != nil && !os.IsTimeout(err) {
+		return false, err
+	} else {
+		timeoutErr = err
 	}
+
+	lines := bytes.Split(bs, []byte{'\n'})
+	if len(lines) > 0 {
+		first := lines[0]
+		return strings.HasPrefix(http2ConnPreface, string(first)), timeoutErr
+	}
+	return false, timeoutErr
+
 }
 
 func matchHTTPVersion(sniffN int, version int, pkr connmatch.Peeker) (bool, error) {

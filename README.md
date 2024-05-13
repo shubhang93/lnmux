@@ -43,8 +43,8 @@ func main() {
 
 	mux := lnmux.Listener{Root: ln, ConnReadTimeout: 100 * time.Millisecond}
 
-	jsonListener := mux.ListenFor("content-type:json", matchers.MatchHeader(192, "Content-Type: application/json"))
-	httpFastListener := mux.ListenFor("http-fast-listener", matchers.MatchHTTPFast(64))
+	httpOneListener := mux.ListenFor("http-one-listener", matchers.AutoMatchHTTP)
+	httpFastListener := mux.ListenFor("http-fast-listener", matchers.AutoMatchHTTPFast)
 	HTTP2Listener := mux.ListenFor("grpc", matchers.MatchHTTP2Preface())
 	// same matcher can be used for GRPC as well
 
@@ -53,7 +53,7 @@ func main() {
 	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		startServer(jsonListener, func(writer http.ResponseWriter, request *http.Request) {
+		startServer(httpOneListener, func(writer http.ResponseWriter, request *http.Request) {
 			_, _ = fmt.Fprintf(writer, "OK")
 		}, false)
 	}()

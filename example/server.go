@@ -27,9 +27,9 @@ func main() {
 
 	mux := lnmux.Listener{Root: ln, ConnReadTimeout: 100 * time.Millisecond}
 
-	jsonListener := mux.ListenFor("content-type:json", matchers.MatchHeader(192, "Content-Type: application/json"))
-	httpFastListener := mux.ListenFor("http-fast-listener", matchers.MatchHTTPFast(64))
-	HTTP2Listener := mux.ListenFor("grpc", matchers.MatchHTTP2Preface())
+	jsonListener := mux.ListenFor("content-type:json", matchers.AutoMatchHeader("Content-Type: application/json"))
+	httpFastListener := mux.ListenFor("http-fast-listener", matchers.AutoMatchHTTPFast)
+	HTTP2Listener := mux.ListenFor("grpc", matchers.MatchHTTP2Preface)
 	// same matcher can be used for GRPC as well
 
 	var wg sync.WaitGroup
