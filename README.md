@@ -1,4 +1,4 @@
-# lnmux [v0.1.4]
+# lnmux [v0.2.0]
 
 ## Listener multiplexing to run multiple web services on a single port (HTTP / HTTP2 / GRPC)
 
